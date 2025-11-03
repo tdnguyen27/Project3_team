@@ -14,13 +14,20 @@ header {
 
 #map, #chart {
   margin: 1rem auto;
-  width: 800px;
+  width: 90%;         /* shrink or expand with screen */
+  max-width: 900px;   /* limit it from getting too big */
   background: white;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 
 svg {
+  width: 100%;        /* fill container width */
+  height: auto;       /* maintain aspect ratio */
+  display: block;
+}
+
+/* svg {
   display: block;
   margin: auto;
-}
+} */

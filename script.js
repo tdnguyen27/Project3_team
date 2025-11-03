@@ -27,8 +27,10 @@ function drawMap(mapData, tsData) {
   d3.select("#map").selectAll("*").remove(); // clear previous map
   const svg = d3.select("#map")
     .append("svg")
-    .attr("width", mapWidth + 100)  // extra space for legend
-    .attr("height", mapHeight);
+    .attr("viewBox", `0 0 ${mapWidth + 100} ${mapHeight}`)
+    .attr("preserveAspectRatio", "xMidYMid meet")
+    .classed("responsive-svg", true);
+
 
     
   // Projection
@@ -69,57 +71,93 @@ function drawMap(mapData, tsData) {
     { name: "Southern", lon: [-180, 180], lat: [-90, -60] }
 ];
 
-svg.selectAll(".region")
+// Create a group for each region (rect + label)
+const regionGroups = svg.selectAll(".region-group")
   .data(regions)
   .enter()
-  .append("rect")
-  .attr("class", "region")
+  .append("g")
+  .attr("class", "region-group")
+  .style("cursor", "pointer")
+  .on("mouseover", function(event, d) {
+    d3.select(this).select("rect").style("fill", "rgba(255,255,0,0.2)");
+    d3.select(this).select("text").style("fill", "orange"); // optional highlight
+  })
+  .on("mouseout", function(event, d) {
+    d3.select(this).select("rect").style("fill", "transparent");
+    d3.select(this).select("text").style("fill", "black"); // reset label color
+  })
+  .on("click", (event, d) => drawChart(tsData, d.name));
+
+// Append rectangle to each group
+regionGroups.append("rect")
   .attr("x", d => projection([d.lon[0], d.lat[1]])[0])
   .attr("y", d => projection([d.lon[0], d.lat[1]])[1])
   .attr("width", d => projection([d.lon[1], 0])[0] - projection([d.lon[0], 0])[0])
   .attr("height", d => projection([0, d.lat[0]])[1] - projection([0, d.lat[1]])[1])
-  .style("fill", "transparent")
-  .style("cursor", "pointer")
-  .on("mouseover", function() { d3.select(this).style("fill", "rgba(255,255,0,0.2)"); })
-  .on("mouseout", function() { d3.select(this).style("fill", "transparent"); })
-  .on("click", (event, d) => drawChart(tsData, d.name));
+  .style("fill", "transparent");
 
-// Labels
-svg.selectAll(".region-label")
-  .data(regions)
-  .enter()
-  .append("text")
+// Append label to each group
+regionGroups.append("text")
   .attr("x", d => projection([(d.lon[0]+d.lon[1])/2, (d.lat[0]+d.lat[1])/2])[0])
   .attr("y", d => projection([(d.lon[0]+d.lon[1])/2, (d.lat[0]+d.lat[1])/2])[1])
   .attr("text-anchor", "middle")
   .attr("dy", "0.35em")
+  .attr("font-size", "18px")
+  .attr("font-weight", "bold")
   .text(d => d.name);
 
+
   
-  const legendHeight = 300, legendWidth = 20;
-  const legendScale = d3.scaleLinear()
-      .domain([minVal, maxVal])
-      .range([legendHeight, 0]);
+// Legend dimensions
+const legendWidth = 20;
+const legendHeight = 300;
 
-  const legendAxis = d3.axisRight(legendScale)
-      .ticks(5);
+// Append defs for gradient
+const defs = svg.append("defs");
 
-  const legend = svg.append("g")
-      .attr("transform", `translate(${mapWidth + 10},50)`);
+const gradient = defs.append("linearGradient")
+    .attr("id", "legend-gradient")
+    .attr("x1", "0%").attr("y1", "100%")
+    .attr("x2", "0%").attr("y2", "0%");
 
-  legend.selectAll("rect")
-      .data(d3.range(legendHeight))
-      .enter()
-      .append("rect")
-      .attr("x", 0)
-      .attr("y", d => d)
-      .attr("width", legendWidth)
-      .attr("height", 1)
-      .attr("fill", d => colorScale(minVal + (maxVal-minVal)*(legendHeight-d)/legendHeight));
+// Create stops
+const nStops = 10; // 10 stops is enough
+d3.range(nStops + 1).forEach(i => {
+  const t = i / nStops;
+  gradient.append("stop")
+    .attr("offset", `${t*100}%`)
+    .attr("stop-color", colorScale(minVal + t*(maxVal-minVal)));
+});
 
-  legend.append("g")
-      .attr("transform", `translate(${legendWidth},0)`)
-      .call(legendAxis);
+// Draw rectangle using gradient
+const legend = svg.append("g")
+  .attr("transform", `translate(${mapWidth + 10},50)`);
+
+legend.append("rect")
+  .attr("width", legendWidth)
+  .attr("height", legendHeight)
+  .style("fill", "url(#legend-gradient)");
+
+// Axis
+const legendScale = d3.scaleLinear()
+    .domain([minVal, maxVal])
+    .range([legendHeight, 0]);
+
+const legendAxis = d3.axisRight(legendScale).ticks(5);
+
+legend.append("g")
+  .attr("transform", `translate(${legendWidth},0)`)
+  .call(legendAxis);
+
+// Axis label
+svg.append("text")
+  .attr("text-anchor", "middle")
+  .attr("transform", `rotate(-90, ${mapWidth + 70}, ${50 + legendHeight/2})`)
+  .attr("x", mapWidth + 70)
+  .attr("y", 50 + legendHeight/2)
+  .attr("font-size", "12px")
+  .text("Sea Surface Temperature (K)");
+
 }
 
 function drawChart(tsData, region) {
@@ -127,8 +165,10 @@ function drawChart(tsData, region) {
 
   const svg = d3.select("#chart")
     .append("svg")
-    .attr("width", chartWidth)
-    .attr("height", chartHeight+30);
+    .attr("viewBox", `0 0 ${mapWidth} ${mapHeight + 40}`)
+    .attr("preserveAspectRatio", "xMidYMid meet")
+    .classed("responsive-svg", true);
+
 
   const regionData = tsData.filter(d => d.region === region);
 
@@ -211,7 +251,7 @@ function drawChart(tsData, region) {
     .attr("font-size", "12px")
     .text("Sea Surface Temperature (K)");
     // --- Annotation: temperature change between 1850 and 2014 ---
-  const yearStart = 1900;
+  const yearStart = 1901;
   const yearEnd = 2014;
 
   const tempStart = regionData.find(d => d.year === yearStart)?.temperature_K;
@@ -220,10 +260,6 @@ function drawChart(tsData, region) {
   if (tempStart && tempEnd) {
     const diff = tempEnd - tempStart;
 
-    // Coordinates for annotation placement
-    const xStart = x(yearStart);
-    const yStart = y(tempStart);
-
     // Add annotation text
     svg.append("text")
       .attr("transform", `translate(${chartWidth/2}, ${chartHeight+10})`)
@@ -231,15 +267,24 @@ function drawChart(tsData, region) {
       .attr("font-size", "12px")
       .attr("fill", "gray")
       .text(`Since the industrial era started in 1901 the ${region} Ocean's mean sea surface temperature has changed by ${diff.toFixed(2)} K`);
-    
-    // Optional: add a line from text to the point
-  //   svg.append("line")
-  //     .attr("x1", xEnd - 10)
-  //     .attr("y1", yEnd - 15)
-  //     .attr("x2", xEnd)
-  //     .attr("y2", yEnd)
-  //     .attr("stroke", "red")
-  //     .attr("stroke-width", 1);
+  
+  const yearFirst = 1850;
+  const yearLast = 2014;
+  const tempFirst = regionData.find(d => d.year === yearFirst)?.temperature_K;
+  const tempLast = regionData.find(d => d.year === yearLast)?.temperature_K;
+
+  if (tempFirst && tempLast) {
+    const dif = tempLast - tempFirst;
+
+    // Add annotation text
+    svg.append("text")
+      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+25})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("fill", "gray")
+      .text(`Since 1850 the ${region} Ocean's mean sea surface temperature has changed by ${dif.toFixed(2)} K`);
+  
+  }
   }
 
 }
