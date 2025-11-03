@@ -27,7 +27,11 @@ svg {
   display: block;
 }
 
-/* svg {
-  display: block;
-  margin: auto;
-} */
+#slider-value {
+  font-size: 20px;
+  font-weight: bold;
+  color: black;
+  font-family: sans-serif;
+  margin: 5px;
+}
+

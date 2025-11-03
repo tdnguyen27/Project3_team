@@ -182,9 +182,10 @@ function drawChart(tsData, region) {
     .range([60, chartWidth - 20]);
 
   const y = d3.scaleLinear()
-    .domain(d3.extent(regionData, d => d.temperature_K))
-    .nice()
-    .range([chartHeight - 40, 20]);
+  .domain([d3.min(regionData, d => d.temperature_K), d3.max(regionData, d => d.temperature_K) + 0.3]) // add extra 1 K at top
+  .nice()
+  .range([chartHeight - 40, 20]); // keep same pixel range
+
 
   // Line generator
   const line = d3.line()
@@ -207,6 +208,52 @@ function drawChart(tsData, region) {
     .attr("stroke-width", 2)
     .attr("d", line);
 
+  d3.select("#year-slider").selectAll("*").remove();
+  const container = d3.select("#slider-container")
+  .text("Move the slider to see the mean sea surface temperature for that year.")
+  .style("font-size", "16px")
+  .style("color", "#333")
+  .style("margin-bottom", "5px")
+  .style("text-align", "center");
+
+  // Create slider
+  const slider = d3.select("#year-slider")
+  .append("input")
+  .attr("type", "range")
+  .attr("min", d3.min(regionData, d => d.year))
+  .attr("max", d3.max(regionData, d => d.year))
+  .attr("value", d3.min(regionData, d => d.year))
+  .attr("step", 1)
+  .style("width", "100%");
+
+  // Circle marker for current year
+  const marker = svg.append("circle")
+  .attr("cx", x(regionData[0].year))
+  .attr("cy", y(regionData[0].temperature_K))
+  .attr("r", 5)
+  .attr("fill", "black");
+
+  // Display value text
+  const valueText = d3.select("#slider-value")
+  .text(`Year: ${regionData[0].year}, Temp: ${regionData[0].temperature_K.toFixed(2)} K`)
+  .style("font-size", "18px");
+
+  // Update function
+  slider.on("input", function() {
+  const selectedYear = +this.value;
+  const yearData = regionData.find(d => d.year === selectedYear);
+  if (!yearData) return;
+
+  // Move marker
+  marker
+    .attr("cx", x(yearData.year))
+    .attr("cy", y(yearData.temperature_K));
+
+  // Update value text
+  valueText.text(`Year: ${yearData.year}, Temp: ${yearData.temperature_K.toFixed(2)} K`);
+  
+});
+
   // Axes
   svg.append("g")
     .attr("transform", `translate(0,${chartHeight - 40})`)
@@ -225,14 +272,23 @@ function drawChart(tsData, region) {
     .text(`${region} Ocean Mean Annual Sea Surface Temperature`);
 
   // Legend
-  const legend = svg.append("g")
-    .attr("transform", `translate(${chartWidth - 275},30)`);
+  const legend = svg.append("g").attr("transform", `translate(${chartWidth - 200}, 35)`);
+  
+  legend.append("rect")
+  .attr("x", -5)       // small padding
+  .attr("y", -5)
+  .attr("width", 190)  // width enough to fit text and color boxes
+  .attr("height", 45)  // height enough for two entries + padding
+  .attr("fill", "transparent") // light background color
+  .attr("stroke", "#999")   // optional border
+  .attr("rx", 5)            // rounded corners
+  .attr("ry", 5);
 
   legend.append("rect").attr("x",0).attr("y",0).attr("width",15).attr("height",15).attr("fill","steelblue");
-  legend.append("text").attr("x",20).attr("y",12).text("Pre-Industrial (1850–1900)");
+  legend.append("text").attr("x",20).attr("y",12).text("Pre-Industrial (1850–1900)").attr("font-size", "13px");
 
   legend.append("rect").attr("x",0).attr("y",20).attr("width",15).attr("height",15).attr("fill","firebrick");
-  legend.append("text").attr("x",20).attr("y",32).text("Post-Industrial (1901–2014)");
+  legend.append("text").attr("x",20).attr("y",32).text("Post-Industrial (1901–2014)").attr("font-size", "13px");
 
     // X-axis label
   svg.append("text")
@@ -284,7 +340,6 @@ function drawChart(tsData, region) {
       .attr("fill", "gray")
       .text(`Since 1850 the ${region} Ocean's mean sea surface temperature has changed by ${dif.toFixed(2)} K`);
   
+    }
   }
-  }
-
 }
