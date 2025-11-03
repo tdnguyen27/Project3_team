@@ -96,7 +96,7 @@ svg.selectAll(".region-label")
   .text(d => d.name);
 
   
-  const legendHeight = 200, legendWidth = 20;
+  const legendHeight = 300, legendWidth = 20;
   const legendScale = d3.scaleLinear()
       .domain([minVal, maxVal])
       .range([legendHeight, 0]);
@@ -128,12 +128,12 @@ function drawChart(tsData, region) {
   const svg = d3.select("#chart")
     .append("svg")
     .attr("width", chartWidth)
-    .attr("height", chartHeight);
+    .attr("height", chartHeight+30);
 
   const regionData = tsData.filter(d => d.region === region);
 
   // Split data into pre- and post-industrial
-  const preIndustrial = regionData.filter(d => d.year <= 1900);
+  const preIndustrial = regionData.filter(d => d.year <= 1901);
   const postIndustrial = regionData.filter(d => d.year >= 1901);
 
   // Scales
@@ -193,4 +193,53 @@ function drawChart(tsData, region) {
 
   legend.append("rect").attr("x",0).attr("y",20).attr("width",15).attr("height",15).attr("fill","firebrick");
   legend.append("text").attr("x",20).attr("y",32).text("Post-Industrial (1901–2014)");
+
+    // X-axis label
+  svg.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", chartWidth / 2)
+    .attr("y", chartHeight - 5)
+    .attr("font-size", "12px")
+    .text("Year");
+
+  // Y-axis label
+  svg.append("text")
+    .attr("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -chartHeight / 2)
+    .attr("y", 20)
+    .attr("font-size", "12px")
+    .text("Sea Surface Temperature (K)");
+    // --- Annotation: temperature change between 1850 and 2014 ---
+  const yearStart = 1900;
+  const yearEnd = 2014;
+
+  const tempStart = regionData.find(d => d.year === yearStart)?.temperature_K;
+  const tempEnd = regionData.find(d => d.year === yearEnd)?.temperature_K;
+
+  if (tempStart && tempEnd) {
+    const diff = tempEnd - tempStart;
+
+    // Coordinates for annotation placement
+    const xStart = x(yearStart);
+    const yStart = y(tempStart);
+
+    // Add annotation text
+    svg.append("text")
+      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+10})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("fill", "gray")
+      .text(`Since the industrial era started in 1901 the ${region} Ocean's mean sea surface temperature has changed by ${diff.toFixed(2)} K`);
+    
+    // Optional: add a line from text to the point
+  //   svg.append("line")
+  //     .attr("x1", xEnd - 10)
+  //     .attr("y1", yEnd - 15)
+  //     .attr("x2", xEnd)
+  //     .attr("y2", yEnd)
+  //     .attr("stroke", "red")
+  //     .attr("stroke-width", 1);
+  }
+
 }
