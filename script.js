@@ -2,7 +2,7 @@
 const mapWidth = 800;
 const mapHeight = 400;
 const chartWidth = 800;
-const chartHeight = 300;
+const chartHeight = 400;
 
 // Load data and draw map
 Promise.all([
@@ -132,6 +132,11 @@ function drawChart(tsData, region) {
 
   const regionData = tsData.filter(d => d.region === region);
 
+  // Split data into pre- and post-industrial
+  const preIndustrial = regionData.filter(d => d.year <= 1900);
+  const postIndustrial = regionData.filter(d => d.year >= 1901);
+
+  // Scales
   const x = d3.scaleLinear()
     .domain(d3.extent(regionData, d => d.year))
     .range([60, chartWidth - 20]);
@@ -141,17 +146,28 @@ function drawChart(tsData, region) {
     .nice()
     .range([chartHeight - 40, 20]);
 
+  // Line generator
   const line = d3.line()
     .x(d => x(d.year))
     .y(d => y(d.temperature_K));
 
+  // Draw pre-industrial line
   svg.append("path")
-    .datum(regionData)
+    .datum(preIndustrial)
     .attr("fill", "none")
     .attr("stroke", "steelblue")
     .attr("stroke-width", 2)
     .attr("d", line);
 
+  // Draw post-industrial line
+  svg.append("path")
+    .datum(postIndustrial)
+    .attr("fill", "none")
+    .attr("stroke", "firebrick")
+    .attr("stroke-width", 2)
+    .attr("d", line);
+
+  // Axes
   svg.append("g")
     .attr("transform", `translate(0,${chartHeight - 40})`)
     .call(d3.axisBottom(x).tickFormat(d3.format("d")));
@@ -160,10 +176,21 @@ function drawChart(tsData, region) {
     .attr("transform", `translate(60,0)`)
     .call(d3.axisLeft(y));
 
+  // Title
   svg.append("text")
     .attr("x", chartWidth / 2)
     .attr("y", 20)
     .attr("text-anchor", "middle")
     .attr("font-size", "16px")
     .text(`${region} Ocean Mean Annual Sea Surface Temperature`);
+
+  // Legend
+  const legend = svg.append("g")
+    .attr("transform", `translate(${chartWidth - 275},30)`);
+
+  legend.append("rect").attr("x",0).attr("y",0).attr("width",15).attr("height",15).attr("fill","steelblue");
+  legend.append("text").attr("x",20).attr("y",12).text("Pre-Industrial (1850–1900)");
+
+  legend.append("rect").attr("x",0).attr("y",20).attr("width",15).attr("height",15).attr("fill","firebrick");
+  legend.append("text").attr("x",20).attr("y",32).text("Post-Industrial (1901–2014)");
 }
