@@ -172,17 +172,13 @@ function drawChart(tsData, region) {
 
   const regionData = tsData.filter(d => d.region === region);
 
-  // Split data into pre- and post-industrial
-  const preIndustrial = regionData.filter(d => d.year <= 1901);
-  const postIndustrial = regionData.filter(d => d.year >= 1901);
-
   // Scales
   const x = d3.scaleLinear()
     .domain(d3.extent(regionData, d => d.year))
     .range([60, chartWidth - 20]);
 
   const y = d3.scaleLinear()
-  .domain([d3.min(regionData, d => d.temperature_K), d3.max(regionData, d => d.temperature_K) + 0.3]) // add extra 1 K at top
+  .domain([d3.min(regionData, d => d.temperature_K), d3.max(regionData, d => d.temperature_K)]) // add extra 1 K at top
   .nice()
   .range([chartHeight - 40, 20]); // keep same pixel range
 
@@ -192,19 +188,10 @@ function drawChart(tsData, region) {
     .x(d => x(d.year))
     .y(d => y(d.temperature_K));
 
-  // Draw pre-industrial line
   svg.append("path")
-    .datum(preIndustrial)
+    .datum(regionData)
     .attr("fill", "none")
-    .attr("stroke", "steelblue")
-    .attr("stroke-width", 2)
-    .attr("d", line);
-
-  // Draw post-industrial line
-  svg.append("path")
-    .datum(postIndustrial)
-    .attr("fill", "none")
-    .attr("stroke", "firebrick")
+    .attr("stroke", "#d03838ff")
     .attr("stroke-width", 2)
     .attr("d", line);
 
@@ -270,26 +257,7 @@ function drawChart(tsData, region) {
     .attr("text-anchor", "middle")
     .attr("font-size", "16px")
     .text(`${region} Ocean Mean Annual Sea Surface Temperature`);
-
-  // Legend
-  const legend = svg.append("g").attr("transform", `translate(${chartWidth - 200}, 35)`);
-  
-  legend.append("rect")
-  .attr("x", -5)       // small padding
-  .attr("y", -5)
-  .attr("width", 190)  // width enough to fit text and color boxes
-  .attr("height", 45)  // height enough for two entries + padding
-  .attr("fill", "transparent") // light background color
-  .attr("stroke", "#999")   // optional border
-  .attr("rx", 5)            // rounded corners
-  .attr("ry", 5);
-
-  legend.append("rect").attr("x",0).attr("y",0).attr("width",15).attr("height",15).attr("fill","steelblue");
-  legend.append("text").attr("x",20).attr("y",12).text("Pre-Industrial (1850–1900)").attr("font-size", "13px");
-
-  legend.append("rect").attr("x",0).attr("y",20).attr("width",15).attr("height",15).attr("fill","firebrick");
-  legend.append("text").attr("x",20).attr("y",32).text("Post-Industrial (1901–2014)").attr("font-size", "13px");
-
+    
     // X-axis label
   svg.append("text")
     .attr("text-anchor", "middle")
@@ -305,25 +273,9 @@ function drawChart(tsData, region) {
     .attr("x", -chartHeight / 2)
     .attr("y", 20)
     .attr("font-size", "12px")
-    .text("Sea Surface Temperature (K)");
-    // --- Annotation: temperature change between 1850 and 2014 ---
-  const yearStart = 1901;
-  const yearEnd = 2014;
+    .text("Sea Surface Temperature in Kelvin (K)");
 
-  const tempStart = regionData.find(d => d.year === yearStart)?.temperature_K;
-  const tempEnd = regionData.find(d => d.year === yearEnd)?.temperature_K;
-
-  if (tempStart && tempEnd) {
-    const diff = tempEnd - tempStart;
-
-    // Add annotation text
-    svg.append("text")
-      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+10})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("fill", "gray")
-      .text(`Since the industrial era started in 1901 the ${region} Ocean's mean sea surface temperature has changed by ${diff.toFixed(2)} K`);
-  
+  // --- Annotation: temperature change between 1850 and 2014 ---
   const yearFirst = 1850;
   const yearLast = 2014;
   const tempFirst = regionData.find(d => d.year === yearFirst)?.temperature_K;
@@ -334,12 +286,19 @@ function drawChart(tsData, region) {
 
     // Add annotation text
     svg.append("text")
-      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+25})`)
+      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+10})`)
       .attr("text-anchor", "middle")
       .attr("font-size", "12px")
       .attr("fill", "gray")
       .text(`Since 1850 the ${region} Ocean's mean sea surface temperature has changed by ${dif.toFixed(2)} K`);
   
-    }
+    
   }
+  const maxData = regionData.reduce((a, b) => a.temperature_K > b.temperature_K ? a : b);
+  svg.append("text")
+      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+25})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("fill", "gray")
+      .text(`Mean sea surface temperature for the ${region} Ocean reached an all time high of ${maxData.temperature_K.toFixed(2)} K in ${maxData.year}`);
 }
