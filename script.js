@@ -27,7 +27,8 @@ function drawMap(mapData, tsData) {
   d3.select("#map").selectAll("*").remove(); // clear previous map
   const svg = d3.select("#map")
     .append("svg")
-    .attr("viewBox", `0 0 ${mapWidth + 100} ${mapHeight}`)
+    // .attr("viewBox", `0 0 ${mapWidth + 100} ${mapHeight}`)
+    .attr("viewBox", `0 ${mapHeight * 0.04} ${mapWidth + 100} ${mapHeight * 0.96}`)
     .attr("preserveAspectRatio", "xMidYMid meet")
     .classed("responsive-svg", true);
 
@@ -36,7 +37,7 @@ function drawMap(mapData, tsData) {
   // Projection
   const projection = d3.geoEquirectangular()
     .scale(mapWidth / (2 * Math.PI))
-    .translate([mapWidth / 2, mapHeight / 2]);
+    .translate([mapWidth / 2, mapHeight / 2])
 
   mapData.forEach(d => d.value = +d.value);
 
@@ -98,8 +99,8 @@ regionGroups.append("rect")
 
 // Append label to each group
 regionGroups.append("text")
-  .attr("x", d => projection([(d.lon[0]+d.lon[1])/2, (d.lat[0]+d.lat[1])/2])[0])
-  .attr("y", d => projection([(d.lon[0]+d.lon[1])/2, (d.lat[0]+d.lat[1])/2])[1])
+  .attr("x", d => projection([(d.lon[0]+d.lon[1])/2 + 5, (d.lat[0]+d.lat[1])/2])[0] + 5)
+  .attr("y", d => projection([(d.lon[0]+d.lon[1])/2 + 5, (d.lat[0]+d.lat[1])/2])[1] +5 )
   .attr("text-anchor", "middle")
   .attr("dy", "0.35em")
   .attr("font-size", "18px")
@@ -131,7 +132,7 @@ d3.range(nStops + 1).forEach(i => {
 
 // Draw rectangle using gradient
 const legend = svg.append("g")
-  .attr("transform", `translate(${mapWidth + 10},50)`);
+  .attr("transform", `translate(${mapWidth + 10},55)`);
 
 legend.append("rect")
   .attr("width", legendWidth)
@@ -152,7 +153,7 @@ legend.append("g")
 // Axis label
 svg.append("text")
   .attr("text-anchor", "middle")
-  .attr("transform", `rotate(-90, ${mapWidth + 70}, ${50 + legendHeight/2})`)
+  .attr("transform", `rotate(-90, ${mapWidth + 70}, ${55 + legendHeight/2})`)
   .attr("x", mapWidth + 70)
   .attr("y", 50 + legendHeight/2)
   .attr("font-size", "12px")
@@ -257,7 +258,7 @@ function drawChart(tsData, region) {
     .attr("text-anchor", "middle")
     .attr("font-size", "16px")
     .text(`${region} Ocean Mean Annual Sea Surface Temperature`);
-    
+
     // X-axis label
   svg.append("text")
     .attr("text-anchor", "middle")
