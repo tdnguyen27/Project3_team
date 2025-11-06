@@ -7,8 +7,9 @@ const chartHeight = 400;
 // Load data and draw map
 Promise.all([
   d3.csv("data/sst_mean_map.csv"),
-  d3.csv("data/ocean_timeseries.csv")
-]).then(([mapData, tsData]) => {
+  d3.csv("data/ocean_timeseries.csv"),
+  d3.csv("data/calc_by_region.csv")                         // 🔴 NEW
+]).then(([mapData, tsData, calcData]) => {                  // 🔴 NEW
   // Convert numeric values
   mapData.forEach(d => {
     d.lon = +d.lon;
@@ -20,10 +21,20 @@ Promise.all([
     d.year = +d.year;
   });
 
-  drawMap(mapData, tsData);
+  drawMap(mapData, tsData, calcData);                       // 🔴 NEW
+
+  // 🔴 hook up the dropdown so changing it redraws the calc chart
+  const levSelect = d3.select("#lev-select");
+  levSelect.on("change", function () {
+    const newLev = +this.value;
+    // only redraw if we already clicked a region
+    if (window.currentRegion) {
+      drawCalcChart(calcData, window.currentRegion, newLev);
+    }
+  });
 });
 
-function drawMap(mapData, tsData) {
+function drawMap(mapData, tsData, calcData) {
   d3.select("#map").selectAll("*").remove(); // clear previous map
   const svg = d3.select("#map")
     .append("svg")
@@ -83,7 +94,10 @@ const regionGroups = svg.selectAll(".region-group")
     d3.select(this).select("rect").style("fill", "transparent");
     d3.select(this).select("text").style("fill", "black"); // reset label color
   })
-  .on("click", (event, d) => drawChart(tsData, d.name));
+  .on("click", (event, d) => {
+    drawChart(tsData, d.name);                 // existing SST chart
+    drawCalcChart(calcData, d.name, 500);      // 🔴 NEW calc w/lev = 500
+  });     
 
 // Append rectangle to each group
 regionGroups.append("rect")
@@ -192,7 +206,7 @@ function drawChart(tsData, region) {
 
   d3.select("#year-slider").selectAll("*").remove();
   const container = d3.select("#slider-container")
-  .text("Move the slider to see the mean sea surface temperature for that year.")
+  .text("Move the slider to see the mean sea surface temperature and calcite concentration for that year.")
   .style("font-size", "16px")
   .style("color", "#333")
   .style("margin-bottom", "5px")
@@ -215,9 +229,18 @@ function drawChart(tsData, region) {
   .attr("r", 5)
   .attr("fill", "black");
 
-  // Display value text
+  const firstYear = regionData[0].year;
+  const firstTemp = regionData[0].temperature_K;
+  let firstCalcText = "";
+  if (typeof window.getCalcForYear === "function") {
+    const firstCalc = window.getCalcForYear(firstYear);
+    if (firstCalc !== null && firstCalc !== undefined) {
+      firstCalcText = `, Calc: ${firstCalc.toExponential(3)} mol m-3`;
+    }
+  }
+
   const valueText = d3.select("#slider-value")
-  .text(`Year: ${regionData[0].year}, Temp: ${regionData[0].temperature_K.toFixed(2)} K`)
+  .text(`Year: ${firstYear}, Temp: ${firstTemp.toFixed(2)} K${firstCalcText}`)
   .style("font-size", "18px");
 
   // Update function
@@ -231,10 +254,24 @@ function drawChart(tsData, region) {
     .attr("cx", x(yearData.year))
     .attr("cy", y(yearData.temperature_K));
 
+  // try to get matching calc value (if calc chart has been drawn)
+  let calcText = "";
+  if (typeof window.getCalcForYear === "function") {
+    const calcVal = window.getCalcForYear(selectedYear);
+    if (calcVal !== null && calcVal !== undefined) {
+      // format however you like
+      calcText = `, Calc: ${calcVal.toExponential(2)} mol m-3`;
+    }
+  }
   // Update value text
-  valueText.text(`Year: ${yearData.year}, Temp: ${yearData.temperature_K.toFixed(2)} K`);
-  
-});
+  valueText.text(
+    `Year: ${yearData.year}, Temp: ${yearData.temperature_K.toFixed(2)} K${calcText}`);
+
+  // 🔴 NEW: tell calc chart as well 
+  if (window.updateCalcYear) {
+    window.updateCalcYear(selectedYear);
+  }
+  });
 
   // Axes
   svg.append("g")
@@ -297,3 +334,212 @@ function drawChart(tsData, region) {
       .attr("fill", "gray")
       .text(`Mean sea surface temperature for the ${region} Ocean reached an all time high of ${maxData.temperature_K.toFixed(2)} K in ${maxData.year}`);
 }
+
+function drawCalcChart(calcData, region, lev) {
+  // remember current selection for dropdown redraws
+  window.currentRegion = region;
+  window.currentLev = lev;
+
+  // clear the calc container
+  d3.select("#calc-chart").selectAll("*").remove();
+
+  // 1) clear previous controls
+  const panel = d3.select("#calc-panel");
+  panel.selectAll("label").remove();
+  panel.selectAll("select").remove();
+
+  // 2) create label + select dynamically
+  const label = panel.append("label")
+    .attr("for", "lev-select")
+    .text("Ocean model level: ")
+    .style("display", "inline-block")  // ensures spacing applies properly
+    .style("margin-top", "10px")
+    .style("margin-right", "5px")
+    .style("margin-left", "10px");     // little space between label and dropdown
+
+  const select = panel.append("select")
+    .attr("id", "lev-select")
+    .style("margin-top", "10px")       // add top padding between chart and dropdown
+    .style("margin-bottom", "10px")    // add extra gap before next content
+    .style("font-size", "14px");
+
+  const levOptions = [500, 1500, 2500, 3500, 4500, 
+    5500, 6500, 7500, 8500, 9500, 
+    10500, 11500, 12500, 13500, 14500];
+
+  select.selectAll("option")
+    .data(levOptions)
+    .enter()
+    .append("option")
+    .attr("value", d => d)
+    .text(d => d)
+    .property("selected", d => d === lev);
+
+  // when user changes lev, redraw
+  select.on("change", function() {
+    const newLev = +this.value;
+    drawCalcChart(calcData, region, newLev);
+  });
+
+  // filter rows for this region AND this lev
+  const rows = calcData
+    .filter(d => d.region === region && +d.lev === +lev)
+    .map(d => ({
+      year: +d.time,
+      calc: +d.calc
+    }))
+    .sort((a, b) => a.year - b.year);  // just to be safe
+
+  // guard: if no data, stop
+  if (!rows.length) return;
+
+  // 🔴 NEW expose a helper so the SST slider can ask for the calc at a given year
+  window.getCalcForYear = function(year) {
+    const match = rows.find(r => r.year === year);
+    return match ? match.calc : null;
+  };
+
+  const svg = d3.select("#calc-chart")
+    .append("svg")
+    .attr("viewBox", `0 0 ${mapWidth} ${mapHeight + 40}`)
+    .attr("preserveAspectRatio", "xMidYMid meet")
+    .classed("responsive-svg", true);
+
+  // scales
+  const x = d3.scaleLinear()
+    .domain(d3.extent(rows, d => d.year))
+    .range([60, chartWidth - 20]);
+
+  const y = d3.scaleLinear()
+    .domain(d3.extent(rows, d => d.calc))
+    .nice()
+    .range([chartHeight - 40, 20]);
+
+  // line
+  const line = d3.line()
+    .x(d => x(d.year))
+    .y(d => y(d.calc));
+
+  // get current slider year if it exists
+  const sliderInput = d3.select("#year-slider input").node();
+  let currentYear = rows[0].year;  // fallback
+
+  if (sliderInput) {
+    const sliderYear = +sliderInput.value;
+    const match = rows.find(r => r.year === sliderYear);
+    if (match) {
+      currentYear = sliderYear;
+    }
+  }
+
+  svg.append("path")
+    .datum(rows)
+    .attr("fill", "none")
+    .attr("stroke", "#3366cc")
+    .attr("stroke-width", 2)
+    .attr("d", line);
+
+  // pick the row that matches the current year (we set above)
+  const currentRow = rows.find(r => r.year === currentYear) || rows[0];
+
+  const marker = svg.append("circle")
+    .attr("cx", x(currentRow.year))
+    .attr("cy", y(currentRow.calc))
+    .attr("r", 5)
+    .attr("fill", "black");
+
+  // axes
+  svg.append("g")
+    .attr("transform", `translate(0,${chartHeight - 40})`)
+    .call(d3.axisBottom(x).tickFormat(d3.format("d")));
+
+  svg.append("g")
+    .attr("transform", `translate(60,0)`)
+    .call(
+      d3.axisLeft(y)
+      .ticks(6)
+      .tickFormat(d => d.toExponential(2))
+    );
+
+  // labels
+  svg.append("text")
+    .attr("x", chartWidth / 2)
+    .attr("y", 20)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "16px")
+    .text(`${region} Ocean Calcite Concentration at Level ${lev}`);
+
+  // y axis formatting
+  svg.append("text")
+    .attr("text-anchor", "middle")
+    .attr("transform", "rotate(-90)")
+    .attr("x", -chartHeight / 2)
+    .attr("y", 10)
+    .attr("font-size", "12px")
+    .text("Calcite concentration (mol m-3)");
+
+  // x axis formatting
+  svg.append("text")
+    .attr("text-anchor", "middle")
+    .attr("x", chartWidth / 2)
+    .attr("y", chartHeight - 5)
+    .attr("font-size", "12px")
+    .text("Year");
+
+  // --- Annotation: calcite change between first and last year ---
+  const yearFirst = 1850; 
+  const yearLast  = 2014;  
+  const calcFirst = rows.find(r => r.year === yearFirst)?.calc;
+  const calcLast  = rows.find(r => r.year === yearLast)?.calc;
+
+  if (calcFirst !== undefined && calcLast !== undefined) {
+    const dif = calcLast - calcFirst;
+
+    svg.append("text")
+      .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + 10})`)
+      .attr("text-anchor", "middle")
+      .attr("font-size", "12px")
+      .attr("fill", "gray")
+      .text(
+        `Since ${yearFirst} the ${region} Ocean's calcite concentration at level ${lev} has changed by ${dif.toExponential(2)} mol m-3`
+      );
+  }
+  // max calc for this region+lev
+  const maxRow = rows.reduce((a, b) => (a.calc < b.calc ? a : b));
+  svg.append("text")
+    .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + 25})`)
+    .attr("text-anchor", "middle")
+    .attr("font-size", "12px")
+    .attr("fill", "gray")
+    .text(
+      `Calcite concentration for the ${region} Ocean reached a low of ${maxRow.calc.toExponential(2)} mol m-3 in ${maxRow.year}`
+    );
+
+  // 🔴 this is what the SST slider will call
+  window.updateCalcYear = function(selectedYear) {
+    const match = rows.find(r => r.year === selectedYear);
+    if (!match) return;
+    marker
+      .attr("cx", x(match.year))
+      .attr("cy", y(match.calc));
+  };
+
+  // also update the slider text if it exists
+  const sliderTextSel = d3.select("#slider-value");
+  const currentText = sliderTextSel.text(); // e.g. "Year: 1890, Temp: 18.69 K"
+
+  // try to pull out year and temp from the existing text
+  const m = currentText.match(/Year:\s*(\d{4}).*?Temp:\s*([\d.]+)\s*K/);
+  if (m) {
+    const yr = +m[1];
+    const tempK = +m[2];
+    const calcVal = window.getCalcForYear(yr);
+
+    let newText = `Year: ${yr}, Temp: ${tempK.toFixed(2)} K`;
+    if (calcVal !== null && calcVal !== undefined) {
+      newText += `, Calc: ${calcVal.toExponential(2)} mol m-3`;
+    }
+    sliderTextSel.text(newText);
+  }
+}
+
