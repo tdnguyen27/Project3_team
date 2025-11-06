@@ -458,7 +458,7 @@ function drawCalcChart(calcData, region, lev) {
     .call(
       d3.axisLeft(y)
       .ticks(6)
-      .tickFormat(d => d.toExponential(1))
+      .tickFormat(d => d.toExponential(2))
     );
 
   // labels
@@ -474,7 +474,7 @@ function drawCalcChart(calcData, region, lev) {
     .attr("text-anchor", "middle")
     .attr("transform", "rotate(-90)")
     .attr("x", -chartHeight / 2)
-    .attr("y", 13)
+    .attr("y", 10)
     .attr("font-size", "12px")
     .text("Calcite concentration (mol m-3)");
 
