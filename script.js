@@ -164,7 +164,7 @@ svg.append("text")
   .attr("transform", `rotate(-90, ${mapWidth + 70}, ${55 + legendHeight/2})`)
   .attr("x", mapWidth + 70)
   .attr("y", 50 + legendHeight/2)
-  .attr("font-size", "12px")
+  .attr("font-size", "14px")
   .text("Sea Surface Temperature (K)");
 
 }
@@ -275,10 +275,12 @@ function drawChart(tsData, region) {
 
   // Axes
   svg.append("g")
+    .attr("class", "x axis")
     .attr("transform", `translate(0,${chartHeight - 40})`)
     .call(d3.axisBottom(x).tickFormat(d3.format("d")));
 
   svg.append("g")
+    .attr("class", "x axis")
     .attr("transform", `translate(60,0)`)
     .call(d3.axisLeft(y));
 
@@ -287,15 +289,15 @@ function drawChart(tsData, region) {
     .attr("x", chartWidth / 2)
     .attr("y", 20)
     .attr("text-anchor", "middle")
-    .attr("font-size", "16px")
+    .attr("font-size", "20px")
     .text(`${region} Ocean Mean Annual Sea Surface Temperature`);
 
     // X-axis label
   svg.append("text")
     .attr("text-anchor", "middle")
-    .attr("x", chartWidth / 2)
+    .attr("x", chartWidth / 2 + 5)
     .attr("y", chartHeight - 5)
-    .attr("font-size", "12px")
+    .attr("font-size", "14px")
     .text("Year");
 
   // Y-axis label
@@ -303,36 +305,26 @@ function drawChart(tsData, region) {
     .attr("text-anchor", "middle")
     .attr("transform", "rotate(-90)")
     .attr("x", -chartHeight / 2)
-    .attr("y", 20)
-    .attr("font-size", "12px")
+    .attr("y", 15)
+    .attr("font-size", "14px")
     .text("Sea Surface Temperature in Kelvin (K)");
 
-  // --- Annotation: temperature change between 1850 and 2014 ---
-  const yearFirst = 1850;
-  const yearLast = 2014;
-  const tempFirst = regionData.find(d => d.year === yearFirst)?.temperature_K;
-  const tempLast = regionData.find(d => d.year === yearLast)?.temperature_K;
+  // --- Annotation: temperature change between 1850 and 2014 and highest temperature---
+// --- Annotation outside SVG ---
+const yearFirst = 1850;
+const yearLast = 2014;
+const tempFirst = regionData.find(d => d.year === yearFirst)?.temperature_K;
+const tempLast = regionData.find(d => d.year === yearLast)?.temperature_K;
+const maxData = regionData.reduce((a, b) => a.temperature_K > b.temperature_K ? a : b);
 
-  if (tempFirst && tempLast) {
-    const dif = tempLast - tempFirst;
+const chartAnnotation = d3.select("#chart-annotation");
+chartAnnotation.html(`
+  <p>Since 1850 the ${region} Ocean's mean sea surface temperature changed by ${(tempLast - tempFirst).toFixed(2)} K.</p>
+  <p>Mean sea surface temperature peaked at ${maxData.temperature_K.toFixed(2)} K in ${maxData.year}.</p>
+`).style("font-size", "14px")
+  .style("color", "#333")
+  .style("margin-top", "0.5rem");
 
-    // Add annotation text
-    svg.append("text")
-      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+10})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("fill", "gray")
-      .text(`Since 1850 the ${region} Ocean's mean sea surface temperature has changed by ${dif.toFixed(2)} K`);
-  
-    
-  }
-  const maxData = regionData.reduce((a, b) => a.temperature_K > b.temperature_K ? a : b);
-  svg.append("text")
-      .attr("transform", `translate(${chartWidth/2}, ${chartHeight+25})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("fill", "gray")
-      .text(`Mean sea surface temperature for the ${region} Ocean reached an all time high of ${maxData.temperature_K.toFixed(2)} K in ${maxData.year}`);
 }
 
 function drawCalcChart(calcData, region, lev) {
@@ -343,43 +335,47 @@ function drawCalcChart(calcData, region, lev) {
   // clear the calc container
   d3.select("#calc-chart").selectAll("*").remove();
 
-  // 1) clear previous controls
-  const panel = d3.select("#calc-panel");
-  panel.selectAll("label").remove();
-  panel.selectAll("select").remove();
+// 🔹 Select the parent panel (outside the chart)
+const panel = d3.select("#calc-panel");
 
-  // 2) create label + select dynamically
-  const label = panel.append("label")
-    .attr("for", "lev-select")
-    .text("Ocean model level: ")
-    .style("display", "inline-block")  // ensures spacing applies properly
-    .style("margin-top", "10px")
-    .style("margin-right", "5px")
-    .style("margin-left", "10px");     // little space between label and dropdown
+// Remove any existing dropdown to avoid duplicates
+panel.select("#lev-select-container").remove();
 
-  const select = panel.append("select")
-    .attr("id", "lev-select")
-    .style("margin-top", "10px")       // add top padding between chart and dropdown
-    .style("margin-bottom", "10px")    // add extra gap before next content
-    .style("font-size", "14px");
+// Create a small wrapper above the chart for the dropdown
+const selectContainer = panel.insert("div", ":first-child")
+  .attr("id", "lev-select-container")
+  .style("text-align", "center")
+  .style("margin-bottom", "10px");
 
-  const levOptions = [500, 1500, 2500, 3500, 4500, 
-    5500, 6500, 7500, 8500, 9500, 
-    10500, 11500, 12500, 13500, 14500];
+selectContainer.append("label")
+  .attr("for", "lev-select")
+  .text("Ocean model level: ")
+  .style("margin-right", "5px")
+  .style("font-size", "15px");
 
-  select.selectAll("option")
-    .data(levOptions)
-    .enter()
-    .append("option")
-    .attr("value", d => d)
-    .text(d => d)
-    .property("selected", d => d === lev);
+const select = selectContainer.append("select")
+  .attr("id", "lev-select")
+  .style("font-size", "14px");
 
-  // when user changes lev, redraw
-  select.on("change", function() {
-    const newLev = +this.value;
-    drawCalcChart(calcData, region, newLev);
-  });
+// Dropdown options
+const levOptions = [500, 1500, 2500, 3500, 4500, 
+  5500, 6500, 7500, 8500, 9500, 
+  10500, 11500, 12500, 13500, 14500];
+
+select.selectAll("option")
+  .data(levOptions)
+  .enter()
+  .append("option")
+  .attr("value", d => d)
+  .text(d => d)
+  .property("selected", d => d === lev);
+
+// Redraw chart when dropdown changes
+select.on("change", function() {
+  const newLev = +this.value;
+  drawCalcChart(calcData, region, newLev);
+});
+
 
   // filter rows for this region AND this lev
   const rows = calcData
@@ -450,15 +446,17 @@ function drawCalcChart(calcData, region, lev) {
 
   // axes
   svg.append("g")
+    .attr("class", "x axis")
     .attr("transform", `translate(0,${chartHeight - 40})`)
     .call(d3.axisBottom(x).tickFormat(d3.format("d")));
 
   svg.append("g")
+    .attr("class", "x axis")
     .attr("transform", `translate(60,0)`)
     .call(
       d3.axisLeft(y)
       .ticks(6)
-      .tickFormat(d => d.toExponential(2))
+      .tickFormat(d => d.toExponential(1))
     );
 
   // labels
@@ -466,7 +464,7 @@ function drawCalcChart(calcData, region, lev) {
     .attr("x", chartWidth / 2)
     .attr("y", 20)
     .attr("text-anchor", "middle")
-    .attr("font-size", "16px")
+    .attr("font-size", "20px")
     .text(`${region} Ocean Calcite Concentration at Level ${lev}`);
 
   // y axis formatting
@@ -475,45 +473,33 @@ function drawCalcChart(calcData, region, lev) {
     .attr("transform", "rotate(-90)")
     .attr("x", -chartHeight / 2)
     .attr("y", 10)
-    .attr("font-size", "12px")
+    .attr("font-size", "14px")
     .text("Calcite concentration (mol m-3)");
 
   // x axis formatting
   svg.append("text")
     .attr("text-anchor", "middle")
-    .attr("x", chartWidth / 2)
+    .attr("x", chartWidth / 2 + 5)
     .attr("y", chartHeight - 5)
-    .attr("font-size", "12px")
+    .attr("font-size", "14px")
     .text("Year");
 
   // --- Annotation: calcite change between first and last year ---
-  const yearFirst = 1850; 
-  const yearLast  = 2014;  
-  const calcFirst = rows.find(r => r.year === yearFirst)?.calc;
-  const calcLast  = rows.find(r => r.year === yearLast)?.calc;
+// --- Annotation outside SVG ---
+const yearFirst = 1850; 
+const yearLast  = 2014;  
+const calcFirst = rows.find(r => r.year === yearFirst)?.calc;
+const calcLast  = rows.find(r => r.year === yearLast)?.calc;
+const maxRow = rows.reduce((a, b) => (a.calc < b.calc ? a : b));
 
-  if (calcFirst !== undefined && calcLast !== undefined) {
-    const dif = calcLast - calcFirst;
+const calcAnnotation = d3.select("#calc-annotation");
+calcAnnotation.html(`
+  <p>Since ${yearFirst} the ${region} Ocean's calcite concentration at level ${lev} changed by ${calcLast - calcFirst !== undefined ? (calcLast - calcFirst).toExponential(2) : 'N/A'} mol m-3.</p>
+  <p>Calcite concentration reached a low of ${maxRow.calc.toExponential(2)} mol m-3 in ${maxRow.year}.</p>
+`).style("font-size", "14px")
+  .style("color", "#333")
+  .style("margin-top", "0.5rem");
 
-    svg.append("text")
-      .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + 10})`)
-      .attr("text-anchor", "middle")
-      .attr("font-size", "12px")
-      .attr("fill", "gray")
-      .text(
-        `Since ${yearFirst} the ${region} Ocean's calcite concentration at level ${lev} has changed by ${dif.toExponential(2)} mol m-3`
-      );
-  }
-  // max calc for this region+lev
-  const maxRow = rows.reduce((a, b) => (a.calc < b.calc ? a : b));
-  svg.append("text")
-    .attr("transform", `translate(${chartWidth / 2}, ${chartHeight + 25})`)
-    .attr("text-anchor", "middle")
-    .attr("font-size", "12px")
-    .attr("fill", "gray")
-    .text(
-      `Calcite concentration for the ${region} Ocean reached a low of ${maxRow.calc.toExponential(2)} mol m-3 in ${maxRow.year}`
-    );
 
   // 🔴 this is what the SST slider will call
   window.updateCalcYear = function(selectedYear) {
