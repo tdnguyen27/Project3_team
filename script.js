@@ -138,6 +138,11 @@ function drawMap(mapData, tsData, calcData) {
       drawChart(tsData, d.name);
       drawCalcChart(calcData, d.name, 500);
       window.currentRegion = d.name;
+      const target = document.getElementById("parent-chart"); // or "chart-panel" if you prefer
+      if (target) {
+        const y = target.getBoundingClientRect().top + window.scrollY - 8; // small offset
+        window.scrollTo({ top: y, behavior: "smooth" });
+      }
     });
 
   regionGroups.append("rect")
