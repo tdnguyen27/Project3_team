@@ -10,7 +10,7 @@ header {
   padding: 1rem;
   background: #2b8cbe;
   color: white;
-}
+ line-height: 1.5; padding-top: 32px; padding-bottom: 24px; }
 
 /* Parent container for both charts */
 #parent-chart {
@@ -132,3 +132,535 @@ html {
   fill: #333;        /* optional: make tick labels darker */
   font-family: sans-serif;
 }
+
+.cell {
+  shape-rendering: crispEdges;   /* removes fuzzy edges between bins */
+}
+
+.land {
+  fill: #f3f6f9;                 /* very light land tint under cells */
+}
+
+.coast {
+  fill: none;
+  stroke: #c7d3df;               
+  stroke-width: 0.6;
+  opacity: 0.9;
+}
+
+.graticule {
+  fill: none;
+  stroke: #dfe7ef;               
+  stroke-width: 0.4;
+  opacity: 0.5;
+}
+
+
+.legend-discrete .tick text { font-size: 12px; fill: #333; }
+.legend-discrete .tick line { stroke: #8ea2b1; }
+
+
+.ocean-label {
+  font-weight: 800;
+  font-size: 26px;
+  letter-spacing: 0.4px;
+  fill: #0b2239;               
+  stroke: #ffffff;              
+  stroke-width: 3.5px;
+  paint-order: stroke fill;    
+  alignment-baseline: middle;
+  text-anchor: middle;
+}
+
+@media (max-width: 900px) {
+  .ocean-label { font-size: 22px; stroke-width: 3px; }
+}
+
+/* --- Stat pill row (Option A) --- */
+.stats-row{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:10px;
+  margin:4px auto 10px;
+  flex-wrap:wrap;
+}
+.pill{
+  border:1px solid #0002;
+  background:#f8f9fa;
+  padding:6px 10px;
+  border-radius:999px;
+  display:inline-flex;
+  gap:8px;
+  align-items:baseline;
+  white-space:nowrap;
+}
+.pill .label{
+  font-size:12px;
+  color:#666;
+  letter-spacing:.2px;
+}
+.pill .val{
+  font-weight:600;
+  letter-spacing:.1px;
+}
+.tabnums{ font-variant-numeric: tabular-nums; }
+.sup{ vertical-align: super; font-size: 0.75em; }
+
+/* === Sleek range slider (re-applied) === */
+#year-slider{
+  display:flex; justify-content:center; align-items:center; gap:10px;
+  margin: 6px auto 6px; max-width: 960px;
+}
+input[type="range"].range{
+  -webkit-appearance:none; appearance:none; width:100%;
+  height:6px; border-radius:999px; background:#e9ecef; outline:none;
+}
+input[type="range"].range::-webkit-slider-thumb{
+  -webkit-appearance:none; appearance:none; width:16px; height:16px; border-radius:50%;
+  background:#111; box-shadow:0 2px 4px #0002; cursor:pointer;
+}
+input[type="range"].range::-moz-range-thumb{
+  width:16px; height:16px; border-radius:50%; background:#111; box-shadow:0 2px 4px #0002; cursor:pointer; border:none;
+}
+
+
+/* ====================== Typographic polish (neutral, NYT-adjacent) ====================== */
+:root{
+  --fg:#111;
+  --muted:#5f6368;
+  --panel:#fff;
+  --hair:#0002;
+}
+
+html, body{
+  color:var(--fg);
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility;
+ font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; }
+
+/* Header hierarchy — keep existing colors, refine spacing & rhythm */
+header{
+  line-height:1.2;
+ line-height: 1.5; padding-top: 32px; padding-bottom: 24px; }
+header h1{
+  font-weight:800;
+  letter-spacing:-0.01em;
+  margin:0 0 6px;
+  font-size:clamp(22px,2.2vw,28px);
+}
+header h2{
+  font-weight:600;
+  letter-spacing:-0.005em;
+  margin:0 0 6px;
+  font-size:clamp(16px,1.8vw,20px);
+  opacity:.95;
+}
+header h3{
+  font-weight:500;
+  letter-spacing:0;
+  margin:0;
+  font-size:clamp(14px,1.6vw,18px);
+  opacity:.9;
+}
+
+/* Body copy — structure and measure */
+main section > p{
+  max-width: 68ch;
+  margin: 10px auto;
+  line-height:1.55;
+  color: var(--fg);
+  font-size: 15.5px;
+}
+
+/* Annotations: subtle separator, consistent spacing */
+.annotation{
+  border-top:1px solid var(--hair);
+  padding-top:8px;
+  margin-top:10px;
+  color:#2b2b2b;
+}
+
+/* Small axis & legend tune to match pills/slider tone */
+
+
+/* Muted helper (can apply in HTML later if desired; harmless if unused) */
+.muted{ color:var(--muted); }
+
+/* Keep numbers steady (use with .tabnums already present) */
+.tabnums{ font-variant-numeric: tabular-nums; }
+/* Header container: more air + softer edge */
+header{
+  padding: 28px 16px;              /* was ~16px total; adds breathing room */
+  line-height: 1.32;               /* up from 1.2 → fixes cramped lines */
+  box-shadow: 0 1px 0 #0001;       /* tiny hairline for structure */
+ line-height: 1.5; padding-top: 32px; padding-bottom: 24px; }
+
+/* Constrain text width so lines don't sprawl edge-to-edge */
+header > h1, header > h2, header > h3{
+  max-width: 1000px;               /* keeps lines readable */
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Subhead & dek spacing */
+header h1{ margin-bottom: 10px; }
+header h2{ margin-top: 0; margin-bottom: 8px; opacity:.98; }
+header h3{ margin-top: 0; opacity:.92; }
+
+/* Intro block before the map — structured, NYT-ish */
+.intro{
+  max-width: 900px;
+  margin: 16px auto 12px;
+  text-align: center;
+}
+.intro .eyebrow{
+  letter-spacing: .06em;
+  font-size: clamp(16px, 1.8vw, 20px);
+  color: #999494;
+  margin-bottom: 6px;
+ font-weight: 500; letter-spacing: .02em; color:#111; }
+.intro .lede{
+  font-size: clamp(12px, 1.1vw, 14px);
+  line-height: 1.55;
+  color: #555;
+  margin-top: 4px;
+}
+
+
+/* Ocean label badge styling (pill) */
+.ocean-badge { pointer-events: none; } /* let region hit-area receive events */
+.ocean-badge .badge-bg{
+  fill: rgba(255,255,255,.85);
+  stroke: #0002;
+  stroke-width: 1;
+  filter: drop-shadow(0 1px 2px rgba(0,0,0,.12));
+}
+.ocean-badge .badge-text{
+  fill: #0b2239;
+  font-weight: 700;
+  letter-spacing: .2px;
+  font-size: 18px;
+  dominant-baseline: middle;
+  text-anchor: middle;
+}
+@media (max-width: 900px){
+  .ocean-badge .badge-text{ font-size: 16px; }
+}
+
+.context-block{
+  max-width:900px;
+  margin: 10px auto 8px;
+  text-align:left;
+}
+.context-title{
+  margin:0 0 4px;
+  font-size: clamp(14px, 1.6vw, 18px);
+  font-weight: 600;
+  color:#111;
+}
+.context-text{
+  margin: 0 0 8px;
+  color:#5f6368;
+  font-size: 14px;
+  line-height: 1.55;
+}
+@media (max-width: 900px){
+  .context-block{ margin: 8px auto 6px; }
+  .context-text{ font-size: 13.5px; }
+}
+
+#parent-chart{
+  display:flex;
+  gap:24px;
+  align-items:flex-start;
+  flex-wrap:wrap;          /* stack on small screens (already in your file) */
+}
+
+#parent-chart > #chart-panel,
+#parent-chart > #calc-panel{
+  flex:1 1 0;              /* equal columns */
+  min-width:0;             /* critical: allow shrinking without squeezing SVG */
+  max-width:none;          /* no max-width cap here */
+}
+
+#chart-panel .responsive-svg,
+#calc-panel .responsive-svg,
+svg.responsive-svg{
+  width:100% !important;
+  height:auto !important;
+  display:block;
+}
+
+/* Optional: stack below 900px (matches your existing breakpoint) */
+@media (max-width: 900px){
+  #parent-chart > #chart-panel,
+  #parent-chart > #calc-panel{
+    flex:1 1 100%;
+  }
+}
+#chart-panel, #calc-panel{
+  background:#fff;
+  border:1px solid #eee;
+  border-radius:14px;
+  box-shadow:0 1px 2px rgba(0,0,0,.06);
+  padding:16px 16px 14px;
+}
+
+/* Quieter axes/grid text */
+.responsive-svg .axis path,
+.responsive-svg .axis line{ stroke:#e6e6e6; }
+.responsive-svg .axis text{ fill:#6b6b6b; font-size:12px; }
+
+/* Annotation rule and readable body */
+.annotation{
+  border-top:1px solid #eee;
+  padding-top:8px;
+  color:#2b2b2b;
+  line-height:1.55;
+}
+/* === Direction A: Newspaper Gray =============================== */
+
+/* 1) Header: remove blue, left-align, add a quiet rule */
+header{
+  background: none !important;
+  color: #111;
+  text-align: left;
+  padding: 28px 16px 12px;
+  box-shadow: none;
+  border-bottom: 1px solid #e9ecef;  /* hairline */
+}
+header h1{
+  margin: 0 0 6px 0;
+  font-weight: 800;
+  font-size: clamp(26px, 3vw, 34px);
+  letter-spacing: -0.01em;
+}
+header h2, header h3{
+  margin: 0;
+  color: #555;
+  font-weight: 500;
+  font-size: clamp(14px, 1.6vw, 18px);
+}
+
+/* 2) Page width + cards (map + charts) */
+main{ max-width: 1200px; margin: 0 auto; padding: 8px 16px 32px; }
+
+#map-panel, #chart-panel, #calc-panel{
+  background: #fff;
+  border: 1px solid #eee;
+  border-radius: 14px;
+  box-shadow: 0 1px 2px rgba(0,0,0,.06);
+  padding: 18px 18px 16px;
+  margin: 18px 0 22px;
+}
+
+/* 3) Typography polish inside panels */
+#map-panel h2, #chart-panel h2, #calc-panel h2{
+  margin: 0 0 6px; font-weight: 700; font-size: 18px; letter-spacing: -0.01em;
+}
+#map-panel p, #chart-panel p, #calc-panel p{ color:#444; }
+
+/* 4) Axes + grid: quieter chrome */
+.responsive-svg .axis path,
+.responsive-svg .axis line{ stroke:#e6e6e6; }
+.responsive-svg .axis text{ fill:#6b6b6b; font-size:12px; }
+
+/* 5) Legend + labels */
+#map .legend, #map text{ font-size: 12px; fill:#444; }
+
+/* 6) Ocean labels on the map: softer + halo for legibility */
+.region-group text{
+  fill: #1f2937; font-weight: 600;
+  paint-order: stroke fill; stroke: #fff; stroke-width: 3px; /* halo */
+}
+
+/* 7) Controls: compact, unobtrusive */
+#lev-select-container{
+  text-align: right !important;
+  margin-bottom: 6px !important;
+}
+#lev-select-container label{ color:#444; font-weight:600; }
+#lev-select{
+  font-size: 13px !important;
+  padding: 2px 6px; border:1px solid #dcdcdc; border-radius:8px;
+}
+#year-slider input[type="range"]{ height: 4px; }
+
+/* 8) Narrative blocks width + rhythm */
+#chart-annotation, #calc-annotation{
+  max-width: 900px;
+  margin: 8px auto 0;
+  line-height: 1.55;
+  color: #353535;
+}
+body > header{
+  background: transparent !important;   /* remove blue */
+  color: #111 !important;
+  text-align: left !important;
+  box-shadow: 0 1px 0 #0001 !important;
+  padding: 28px 16px 16px !important;
+}
+body > header h1,
+body > header h2,
+body > header h3{
+  margin: 0 0 6px 0 !important;         /* stop auto-centering */
+  max-width: none !important;
+}
+body > header h1{ font-weight:800; letter-spacing:-0.01em; font-size:clamp(26px,3vw,34px); }
+body > header h2{ font-weight:600; color:#444; font-size:clamp(16px,2vw,20px); }
+body > header h3{ font-weight:500; color:#666; font-size:clamp(14px,1.8vw,18px); }
+
+.map-divider{
+  border:0; height:1px; background:#e9ecef; width:92%; margin:14px auto 0;
+}
+#map .legend .label{ transform:translateX(2px); fill:#555; font-size:12px; }
+#map-panel, #chart-panel, #calc-panel{
+  border-radius:14px; box-shadow:0 1px 2px rgba(0,0,0,.06);
+}
+
+body > header h3{
+  font-size: clamp(13px, 1.35vw, 16px) !important;  /* a touch smaller */
+  color: #6b7280 !important;                         /* lighter gray */
+  font-weight: 500 !important;
+}
+
+/* Map block: headline & dek */
+#map-panel h2{
+  text-transform: none;                 /* show Title Case as typed */
+  letter-spacing: -0.01em;
+  font-weight: 800;
+  font-size: clamp(20px, 2.2vw, 24px);
+  margin: 6px 0 4px;                   /* tighter top, small bottom */
+  text-align: center;
+}
+#map-panel h2 + p{                      /* dek under the map headline */
+  font-size: 14px;
+  color: #5f6368;
+  margin: 2px auto 10px;
+  text-align: center;
+}
+
+/* Gentle divider below the map instructions (optional) */
+.map-divider{
+  border: 0;
+  height: 1px;
+  background: #e9ecef;
+  width: 92%;
+  margin: 14px auto 0;
+}
+
+/* More space between map and slider, and slider and pills */
+#slider-container{
+  margin-top: 16px !important;         /* breathing room above slider */
+  margin-bottom: 6px !important;
+  color: #5f6368;                       /* keep it a bit muted */
+  font-size: 14px;
+}
+#year-slider{                           /* the range input row */
+  margin-top: 4px !important;
+}
+#slider-value{                           /* the stat pills row */
+  margin-top: 12px !important;          /* open up pills a bit */
+}
+
+/* Slightly larger thumb + visible focus ring (nice UX) */
+input[type="range"].range::-webkit-slider-thumb{
+  width: 18px; height: 18px;
+}
+input[type="range"].range:focus-visible{
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(33,150,243,.25);
+}
+
+#map-panel h2{
+  text-transform: none;                 /* keep Title Case you type */
+  letter-spacing: -0.01em;
+  font-weight: 800;
+  line-height: 1.2;
+  font-size: clamp(20px, 2.2vw, 24px);
+  margin: 6px 0 4px;                   /* gentle spacing */
+  text-align: center;
+}
+
+#map-panel h2 + p{                      /* instruction/dek line */
+  max-width: 56ch;                      /* readable measure */
+  margin: 2px auto 12px;
+  font-size: 14px;
+  color: #6b7280;                       /* lighter gray */
+  text-align: center;
+}
+
+/* optional hairline rule under the dek (subtle) */
+#map-panel .map-divider{
+  border: 0;
+  height: 1px;
+  background: #e9ecef;
+  width: 92%;
+  margin: 10px auto 0;
+}
+
+/* breathing room around slider and pills */
+#slider-container{ margin-top: 16px !important; }
+#year-slider{ margin-top: 6px !important; }
+#slider-value{ margin-top: 14px !important; }
+
+#chart-panel,#calc-panel{ padding:18px 18px 14px; }
+#chart-annotation,#calc-annotation{ margin-top:10px; }
+/* Ensure all SVG text uses the same font as the page */
+svg, svg text, .responsive-svg text{
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Axis tick labels (match rest of UI) */
+.responsive-svg .axis text{
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
+  font-size: 12.5px;
+  fill: #555;
+}
+
+/* Rotated Y-axis labels */
+.responsive-svg .y-label{
+  font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif !important;
+  font-weight: 600;
+  letter-spacing: 0;
+  fill: #2b2b2b;
+}
+#app-loader[hidden] { display: none; }
+
+#app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: grid;
+  place-items: center;
+  background: rgba(255,255,255,0.82);
+  backdrop-filter: blur(2px);
+}
+
+#app-loader .loader-text {
+  margin-top: 12px;
+  font-size: 14px;
+  color: #555;
+}
+
+.loader-spinner {
+  width: 48px; height: 48px;
+  border-radius: 50%;
+  border: 4px solid #dbe4f0;
+  border-top-color: #2b8cbe; /* theme accent */
+  animation: spin 0.8s linear infinite;
+}
+
+/* respect reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .loader-spinner { animation: none; border-top-color: #2b8cbe; }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* Optional: prevent scroll while loading */
+body.is-loading { overflow: hidden; }

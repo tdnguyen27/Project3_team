@@ -6,16 +6,21 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div id="app-loader" role="status" aria-live="polite" aria-busy="true" hidden>
+    <div class="loader-spinner" aria-hidden="true"></div>
+    <p class="loader-text">Loading data&hellip;</p>
+  </div>
   <header>
-    <h1>Sea Surface Temperature Explorer</h1>
-    <h2>How has the industrial era affected sea surface temperatures across 164 years?</h2>
-    <h3>Across every ocean there seems to be a substantial rise in sea surface temperature reflecting global warming.</h3>
+    <h2>🔎 Across the Seas: How has the industrial era affected sea surface temperatures and calcite levels across 164 years?</h2>
+    <h3>Throughout Earth's oceans, there seems to be a substantial rise in sea surface temperature reflecting global warming and a less substantial decline in calcite concentration with no visible fluctuating pattern.</h3>
   </header>
 
   <main>
     <section>
-      <p style="text-align: center;">Overall Mean Sea Surface Temperature Given the Past 164 Years</p>
-      <p style="text-align: center;">Click on an ocean region to view its historical mean temperature (1850–2014)</p>
+      <div class="intro">
+        <div class="eyebrow">Overall Mean Sea Surface Temperature Given the Past 164 Years</div>
+        <p class="lede">📌 Click an ocean region to view its historical trends in the simulated data (1850 - 2014)</p>
+      </div>
       <div id="map"></div>
       <div id="slider-container"></div>
       <div id="year-slider"></div>
@@ -40,7 +45,7 @@
       <p></p>
     </section>
   </main>
-
+  <script src="https://cdn.jsdelivr.net/npm/topojson-client@3"></script>
   <script src="https://d3js.org/d3.v7.min.js"></script>
   <script src="script.js"></script>
 </body>
