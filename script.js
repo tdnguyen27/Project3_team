@@ -51,6 +51,36 @@ function hideLoader() {
   });
 }
 
+const scrollToSliderTop = () => {
+  const section =
+    document.getElementById("slider-section") ||
+    document.getElementById("year-slider");
+  if (!section) return;
+
+  const prefersReduced = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  const header = document.querySelector(
+    '.site-header, header[role="banner"], .sticky-header'
+  );
+  const headerH = header ? header.offsetHeight : 0;
+
+  // Compute exact Y so the section’s top hits the viewport top (under any fixed header).
+  const targetY =
+    section.getBoundingClientRect().top + window.scrollY - headerH;
+
+  window.scrollTo({
+    top: targetY,
+    behavior: prefersReduced ? "auto" : "smooth",
+  });
+
+  // Mobile browsers sometimes shift layout as the URL bar hides—re-snap once after paint.
+  setTimeout(() => {
+    const y2 = section.getBoundingClientRect().top + window.scrollY - headerH;
+    window.scrollTo({ top: y2, behavior: prefersReduced ? "auto" : "instant" });
+  }, 250);
+};
+
 /* =========================
    Data load + first render
 ========================= */
@@ -138,11 +168,7 @@ function drawMap(mapData, tsData, calcData) {
       drawChart(tsData, d.name);
       drawCalcChart(calcData, d.name, 500);
       window.currentRegion = d.name;
-      const target = document.getElementById("parent-chart"); // or "chart-panel" if you prefer
-      if (target) {
-        const y = target.getBoundingClientRect().top + window.scrollY - 8; // small offset
-        window.scrollTo({ top: y, behavior: "smooth" });
-      }
+      scrollToSliderTop();
     });
 
   regionGroups.append("rect")
@@ -543,3 +569,4 @@ function drawCalcChart(calcData, region, lev) {
       : formatSci(calcVal, 2) + '&nbsp;mol m<span class="sup">−3</span>';
   }
 }
+
