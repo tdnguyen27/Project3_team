@@ -665,3 +665,8 @@ svg, svg text, .responsive-svg text{
 /* Optional: prevent scroll while loading */
 body.is-loading { overflow: hidden; }
 
+section.Write-Up p {
+  max-width: none;  /* override the 68ch limit */
+  width: 100%;
+  margin: 10px 0;
+}
